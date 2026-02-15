@@ -2,9 +2,11 @@
 --// + Auto Skills + Auto Attack + Auto Equip
 --// + Teleport to TestChest when it appears in workspace.Effects
 --// + Weapon dropdown includes "None"
---// + Enemy dropdown (FingerBearer, OgreCurse)
+--// + Enemy dropdown (FingerBearer, OgreCurse, Sukuna, Gojo, IroncladGnasher)
+--// + REVERTED: Auto-Attack to original Click() M1 (remotes removed)
+--// + ENHANCED: Strict equip-before-teleport (farm pauses until fully equipped)
 --// + NEW: Wait for Backpack to finish loading before equipping
---// + NEW: Autofarm pauses until equipped (if weapon != None)
+--// + REVERTED: Movement to original GetBehind (- LookVector on HumanoidRootPart)
 
 --// Services
 local Players = game:GetService("Players")
@@ -96,7 +98,7 @@ Tabs.Main:AddToggle("FarmToggle", {
     Settings.FarmEnabled = v
 end)
 
-local EnemyValues = { "FingerBearer", "OgreCurse" }
+local EnemyValues = { "FingerBearer", "OgreCurse", "Sukuna", "Gojo", "IroncladGnasher" }
 
 local EnemyDropdown = Tabs.Main:AddDropdown("EnemyDropdown", {
     Title = "Enemy Target",
@@ -330,7 +332,7 @@ local function EquipWeapon()
 end
 
 ------------------------------------------------------------
--- TARGET SYSTEM (uses SelectedEnemy)
+-- TARGET SYSTEM (uses SelectedEnemy) - ORIGINAL
 ------------------------------------------------------------
 
 local function IsValidTarget(enemy)
@@ -464,12 +466,11 @@ RunService.RenderStepped:Connect(function()
         return
     end
 
-    -- If weapon selected, pause farm movement until equipped
+    -- STRICT: If weapon selected, pause ALL farm movement until FULLY equipped
     if Settings.SelectedWeapon ~= "None" then
         if not IsEquipped() then
-            -- attempt equip (non-blocking: EquipWeapon has no long waits)
-            EquipWeapon()
-            return
+            EquipWeapon()  -- Attempt equip every frame until success
+            return  -- NO teleport until equipped
         end
     end
 
@@ -582,6 +583,6 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 
 Fluent:Notify({
     Title = "autofarm",
-    Content = "Loaded (Backpack wait + farm pauses until equipped).",
+    Content = "Loaded (Auto-Attack reverted to M1 + strict equip-before-teleport).",
     Duration = 6
 })
